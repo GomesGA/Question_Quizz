@@ -7,7 +7,21 @@ import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
+import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.responses.ApiResponse as SwaggerApiResponse
+import io.swagger.v3.oas.annotations.responses.ApiResponses
+import io.swagger.v3.oas.annotations.tags.Tag
 
+/**
+ * Controlador responsável por gerenciar as operações relacionadas a usuários.
+ * 
+ * Este controlador fornece endpoints para registro e autenticação de usuários.
+ * Todas as operações são acessíveis através do prefixo '/api/usuarios'.
+ *
+ * @property usuarioRepository Repositório para acesso aos dados de usuários
+ * @property passwordEncoder Codificador de senhas usando BCrypt
+ */
+@Tag(name = "Usuários", description = "API para gerenciamento de usuários")
 @RestController
 @RequestMapping("/api/usuarios")
 class UsuarioController(
@@ -15,13 +29,27 @@ class UsuarioController(
 ) {
     private val passwordEncoder = BCryptPasswordEncoder()
 
+    /**
+     * Registra um novo usuário no sistema.
+     * 
+     * Este endpoint recebe os dados do usuário e realiza o cadastro no sistema.
+     * A senha é criptografada antes de ser armazenada no banco de dados.
+     * 
+     * @param request DTO contendo os dados do usuário a ser registrado
+     * @return ResponseEntity contendo os dados do usuário registrado ou mensagem de erro
+     * @throws Exception se ocorrer algum erro durante o processo de registro
+     */
+    @Operation(summary = "Registrar novo usuário", description = "Cria um novo usuário no sistema com os dados fornecidos")
+    @ApiResponses(value = [
+        SwaggerApiResponse(responseCode = "200", description = "Usuário registrado com sucesso"),
+        SwaggerApiResponse(responseCode = "400", description = "Email já cadastrado")
+    ])
     @PostMapping("/registrar")
     fun registrar(@RequestBody request: UsuarioRequestDTO): ResponseEntity<ApiResponse<UsuarioResponseDTO>> {
         val usuarioExistente = usuarioRepository.findByEmail(request.email)
         if (usuarioExistente.isPresent) {
             return ResponseEntity.badRequest().body(
-                ApiResponse(
-                    success = false,
+                ApiResponse.error(
                     message = "Email já cadastrado"
                 )
             )
@@ -42,14 +70,28 @@ class UsuarioController(
         )
 
         return ResponseEntity.ok(
-            ApiResponse(
-                success = true,
+            ApiResponse.success(
                 message = "Usuário registrado com sucesso",
                 data = response
             )
         )
     }
 
+    /**
+     * Realiza a autenticação de um usuário no sistema.
+     * 
+     * Este endpoint recebe as credenciais do usuário e verifica se são válidas.
+     * A senha fornecida é comparada com a senha criptografada armazenada no banco de dados.
+     * 
+     * @param request DTO contendo as credenciais do usuário (email e senha)
+     * @return ResponseEntity contendo os dados do usuário autenticado ou mensagem de erro
+     * @throws Exception se ocorrer algum erro durante o processo de autenticação
+     */
+    @Operation(summary = "Autenticar usuário", description = "Realiza o login do usuário com email e senha")
+    @ApiResponses(value = [
+        SwaggerApiResponse(responseCode = "200", description = "Login realizado com sucesso"),
+        SwaggerApiResponse(responseCode = "401", description = "Credenciais inválidas")
+    ])
     @PostMapping("/login")
     fun login(@RequestBody request: LoginRequestDTO): ResponseEntity<ApiResponse<LoginResponseDTO>> {
         val usuario = usuarioRepository.findByEmail(request.email)
@@ -57,8 +99,7 @@ class UsuarioController(
 
         if (usuario == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(
-                ApiResponse(
-                    success = false,
+                ApiResponse.error(
                     message = "Email não encontrado"
                 )
             )
@@ -66,8 +107,7 @@ class UsuarioController(
 
         if (!passwordEncoder.matches(request.senha, usuario.senhaHash)) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(
-                ApiResponse(
-                    success = false,
+                ApiResponse.error(
                     message = "Senha inválida"
                 )
             )
@@ -80,8 +120,7 @@ class UsuarioController(
         )
 
         return ResponseEntity.ok(
-            ApiResponse(
-                success = true,
+            ApiResponse.success(
                 message = "Login realizado com sucesso",
                 data = LoginResponseDTO(usuarioResponse)
             )
