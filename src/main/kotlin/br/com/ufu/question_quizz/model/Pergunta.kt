@@ -25,9 +25,6 @@ data class Pergunta(
     @Column(name = "is_private")
     val privada: Boolean? = null,
 
-    @Column(name = "id_alter_correta")
-    val idAlternativaCorreta: Int? = null,
-
     @Column(name = "gabarito_txt", length = 255)
     val gabaritoTexto: String? = null,
 

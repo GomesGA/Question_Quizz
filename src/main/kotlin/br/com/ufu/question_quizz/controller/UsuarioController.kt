@@ -69,7 +69,7 @@ class UsuarioController(
             email = usuarioSalvo.email
         )
 
-        return ResponseEntity.ok(
+        return ResponseEntity.status(HttpStatus.CREATED).body(
             ApiResponse.success(
                 message = "Usuário registrado com sucesso",
                 data = response
