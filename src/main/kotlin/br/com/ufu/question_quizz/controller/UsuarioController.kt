@@ -126,4 +126,42 @@ class UsuarioController(
             )
         )
     }
+
+    /**
+     * Atualiza a senha de um usuário existente.
+     * 
+     * Este endpoint recebe o email do usuário e a nova senha,
+     * atualizando a senha criptografada no banco de dados.
+     * 
+     * @param request DTO contendo o email do usuário e a nova senha
+     * @return ResponseEntity contendo mensagem de sucesso ou erro
+     * @throws Exception se ocorrer algum erro durante o processo de atualização
+     */
+    @Operation(summary = "Atualizar senha", description = "Atualiza a senha de um usuário existente")
+    @ApiResponses(value = [
+        SwaggerApiResponse(responseCode = "200", description = "Senha atualizada com sucesso"),
+        SwaggerApiResponse(responseCode = "404", description = "Usuário não encontrado")
+    ])
+    @PutMapping("/atualizar-senha")
+    fun atualizarSenha(@RequestBody request: AtualizarSenhaRequestDTO): ResponseEntity<ApiResponse<Unit>> {
+        val usuario = usuarioRepository.findByEmail(request.email)
+            .orElse(null)
+
+        if (usuario == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
+                ApiResponse.error(
+                    message = "Usuário não encontrado"
+                )
+            )
+        }
+
+        val novaSenhaHash = passwordEncoder.encode(request.novaSenha)
+        usuarioRepository.save(usuario.copy(senhaHash = novaSenhaHash))
+
+        return ResponseEntity.ok(
+            ApiResponse.success(
+                message = "Senha atualizada com sucesso"
+            )
+        )
+    }
 } 

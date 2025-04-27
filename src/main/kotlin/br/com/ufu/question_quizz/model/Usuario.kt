@@ -17,7 +17,7 @@ data class Usuario(
     val email: String,
 
     @Column(name = "senha_hash", nullable = false, length = 255)
-    val senhaHash: String,
+    var senhaHash: String,
 
     @Column(name = "dt_criacao")
     val dataCriacao: LocalDateTime = LocalDateTime.now(),
