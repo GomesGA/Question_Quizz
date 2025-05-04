@@ -7,6 +7,7 @@ data class PerguntaResponseDTO(
     val idUsuario: Int,
     val idGrupo: Int?,
     val privada: Boolean?,
+    val descricao: String?,
     val gabaritoTexto: String?,
     val gabaritoNumero: BigDecimal?,
     val gabaritoBooleano: Boolean?,
