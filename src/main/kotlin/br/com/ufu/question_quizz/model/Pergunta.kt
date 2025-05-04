@@ -19,6 +19,10 @@ data class Pergunta(
     @JoinColumn(name = "id_tipo", nullable = false)
     val tipo: TipoPergunta,
 
+    @ManyToOne
+    @JoinColumn(name = "id_grupo")
+    val grupo: Grupo? = null,
+
     @Column(nullable = false, length = 255)
     val pergunta: String,
 

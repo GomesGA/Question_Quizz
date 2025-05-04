@@ -5,9 +5,15 @@ import java.math.BigDecimal
 data class PerguntaRequestDTO(
     val idTipo: Int,
     val idUsuario: Int,
+    val idGrupo: Int?,
     val pergunta: String,
     val privada: Boolean? = false,
     val resposta: RespostaDTO
+)
+
+data class PerguntaDeleteDTO(
+    val id: Int,
+    val idUsuario: Int
 )
 
 data class RespostaDTO(

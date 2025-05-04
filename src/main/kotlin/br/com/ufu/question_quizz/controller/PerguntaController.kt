@@ -4,10 +4,8 @@ import org.springframework.web.bind.annotation.*
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 import br.com.ufu.question_quizz.dto.*
-import br.com.ufu.question_quizz.repository.*
 import org.springframework.http.ResponseEntity
 import br.com.ufu.question_quizz.dto.ApiResponse
-import br.com.ufu.question_quizz.model.*
 import br.com.ufu.question_quizz.service.PerguntaService
 import org.slf4j.LoggerFactory
 import io.swagger.v3.oas.annotations.Operation
@@ -23,18 +21,11 @@ import org.springframework.http.HttpStatus
  * 
  * Este controlador fornece endpoints para manipulação de perguntas e seus tipos.
  * Todas as operações são acessíveis através do prefixo '/api/pergunta'.
- *
- * @property tipoPerguntaRepository Repositório para acesso aos dados de tipos de pergunta
- * @property repoAlternativa Repositório para acesso aos dados de alternativas
  */
 @Tag(name = "Perguntas", description = "API para gerenciamento de perguntas e seus tipos")
 @RestController
 @RequestMapping("/api/pergunta")
 class PerguntaController(
-    private val tipoPerguntaRepository: TipoPerguntaRepository,
-    private val perguntasRepository: PerguntasRepository,
-    private val usuarioRepository: UsuarioRepository,
-    private val alternativaRepository: AlternativaRepository,
     private val perguntaService: PerguntaService
 ) {
     private val logger = LoggerFactory.getLogger(PerguntaController::class.java)
@@ -62,19 +53,9 @@ class PerguntaController(
     @GetMapping("/tipos")
     fun listarTiposPergunta(): ResponseEntity<ApiResponse<List<TipoPerguntaResponseDTO>>> {
         try {
-            val tiposPergunta = tipoPerguntaRepository.findAll()
+            val tiposPergunta = perguntaService.listarTiposPergunta()
             logger.info("Encontrados ${tiposPergunta.size} tipos de pergunta")
-            
-            val tiposPerguntaDTO = tiposPergunta.mapNotNull { tipo ->
-                tipo.id?.let { id ->
-                    TipoPerguntaResponseDTO(
-                        id = id,
-                        descricao = tipo.descricao
-                    )
-                }
-            }
-            
-            return ResponseEntity.ok(ApiResponse.success(tiposPerguntaDTO))
+            return ResponseEntity.ok(ApiResponse.success(tiposPergunta))
         } catch (e: Exception) {
             logger.error("Erro ao listar tipos de pergunta", e)
             return ResponseEntity
@@ -106,63 +87,14 @@ class PerguntaController(
     @PostMapping
     fun criarPergunta(@Valid @RequestBody perguntaRequest: PerguntaRequestDTO): ResponseEntity<ApiResponse<PerguntaResponseDTO>> {
         try {
-            perguntaService.validarPergunta(perguntaRequest)
-
-            val tipoPergunta = tipoPerguntaRepository.findById(perguntaRequest.idTipo)
-                .orElseThrow { IllegalArgumentException("Tipo de pergunta não encontrado") }
-
-            val usuario = usuarioRepository.findById(perguntaRequest.idUsuario)
-                .orElseThrow { IllegalArgumentException("Usuário não encontrado") }
-
-            val pergunta = Pergunta(
-                tipo = tipoPergunta,
-                usuario = usuario,
-                pergunta = perguntaRequest.pergunta,
-                privada = perguntaRequest.privada,
-                gabaritoTexto = perguntaRequest.resposta.texto,
-                gabaritoNumero = perguntaRequest.resposta.numero,
-                gabaritoBooleano = perguntaRequest.resposta.booleano
+            val pergunta = perguntaService.criarPergunta(perguntaRequest)
+            logger.info("Pergunta criada com sucesso: ${pergunta.id}")
+            return ResponseEntity.status(HttpStatus.CREATED).body(
+                ApiResponse.success(
+                    message = "Pergunta criada com sucesso",
+                    data = pergunta
+                )
             )
-
-            val perguntaSalva = perguntasRepository.save(pergunta)
-
-            var alternativasResponse: List<AlternativaResponseDTO>? = null
-
-            // Se houver alternativas, salva-as
-            perguntaRequest.resposta.alternativas?.let { alternativas ->
-                val alternativasSalvas = alternativas.map { alt ->
-                    Alternativa(
-                        pergunta = perguntaSalva,
-                        descricao = alt.descricao,
-                        correta = alt.correta
-                    )
-                }
-                val alternativasSalvasComIds = alternativaRepository.saveAll(alternativasSalvas)
-                
-                // Cria a lista de alternativas com os IDs
-                alternativasResponse = alternativasSalvasComIds.map { alt ->
-                    AlternativaResponseDTO(
-                        id = alt.id!!,
-                        descricao = alt.descricao,
-                        correta = alt.correta
-                    )
-                }
-            }
-
-            val response = PerguntaResponseDTO(
-                id = perguntaSalva.id!!.toInt(),
-                idUsuario = usuario.id!!.toInt(),
-                gabaritoTexto = perguntaSalva.gabaritoTexto,
-                gabaritoNumero = perguntaSalva.gabaritoNumero,
-                gabaritoBooleano = perguntaSalva.gabaritoBooleano,
-                alternativas = alternativasResponse
-            )
-
-            logger.info("Pergunta criada com sucesso: ${perguntaSalva.id}")
-            return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(
-                message = "Pergunta criada com sucesso",
-                data = response
-            ))
         } catch (e: Exception) {
             logger.error("Erro ao criar pergunta", e)
             return ResponseEntity
@@ -173,7 +105,7 @@ class PerguntaController(
 
     @Operation(
         summary = "Buscar perguntas",
-        description = "Busca perguntas com filtros opcionais de ID do usuário e ID da pergunta"
+        description = "Busca perguntas com filtros opcionais de ID do usuário, ID da pergunta e ID do grupo"
     )
     @ApiResponses(value = [
         SwaggerApiResponse(responseCode = "200", description = "Perguntas encontradas com sucesso"),
@@ -182,41 +114,46 @@ class PerguntaController(
     @GetMapping
     fun buscarPerguntas(
         @RequestParam(required = false) idUsuario: Int?,
-        @RequestParam(required = false) idPergunta: Int?
+        @RequestParam(required = false) idPergunta: Int?,
+        @RequestParam(required = false) idGrupo: Int?
     ): ResponseEntity<ApiResponse<List<PerguntaResponseDTO>>> {
         try {
-            val perguntas = perguntasRepository.findByFiltros(idUsuario, idPergunta)
-            
-            val perguntasResponse = perguntas.map { pergunta ->
-                val alternativas = try {
-                    alternativaRepository.findByPerguntaId(pergunta.id ?: throw IllegalArgumentException("ID da pergunta não pode ser nulo"))
-                } catch (e: Exception) {
-                    emptyList()
-                }
-                
-                PerguntaResponseDTO(
-                    id = pergunta.id ?: throw IllegalArgumentException("ID da pergunta não pode ser nulo"),
-                    idUsuario = pergunta.usuario?.id ?: throw IllegalArgumentException("ID do usuário não pode ser nulo"),
-                    gabaritoTexto = pergunta.gabaritoTexto,
-                    gabaritoNumero = pergunta.gabaritoNumero,
-                    gabaritoBooleano = pergunta.gabaritoBooleano,
-                    alternativas = alternativas.map { alt ->
-                        AlternativaResponseDTO(
-                            id = alt.id ?: throw IllegalArgumentException("ID da alternativa não pode ser nulo"),
-                            descricao = alt.descricao,
-                            correta = alt.correta
-                        )
-                    }
-                )
-            }
-
+            val perguntas = perguntaService.buscarPerguntas(idUsuario, idPergunta, idGrupo)
             logger.info("Encontradas ${perguntas.size} perguntas")
-            return ResponseEntity.ok(ApiResponse.success(perguntasResponse))
+            return ResponseEntity.ok(ApiResponse.success(perguntas))
         } catch (e: Exception) {
             logger.error("Erro ao buscar perguntas", e)
             return ResponseEntity
                 .badRequest()
                 .body(ApiResponse.error("Erro ao buscar perguntas: ${e.message}"))
+        }
+    }
+
+    @Operation(
+        summary = "Deletar pergunta",
+        description = "Remove uma pergunta do sistema, validando se ela pertence ao usuário"
+    )
+    @ApiResponses(value = [
+        SwaggerApiResponse(responseCode = "200", description = "Pergunta deletada com sucesso"),
+        SwaggerApiResponse(responseCode = "400", description = "Erro ao deletar pergunta"),
+        SwaggerApiResponse(responseCode = "404", description = "Pergunta não encontrada")
+    ])
+    @DeleteMapping
+    fun deletarPergunta(@Valid @RequestBody perguntaDeleteDTO: PerguntaDeleteDTO): ResponseEntity<ApiResponse<String>> {
+        try {
+            val mensagem = perguntaService.deletarPergunta(perguntaDeleteDTO)
+            logger.info(mensagem)
+            return ResponseEntity.ok(
+                ApiResponse.success(
+                    message = "Pergunta deletada com sucesso",
+                    data = mensagem
+                )
+            )
+        } catch (e: Exception) {
+            logger.error("Erro ao deletar pergunta", e)
+            return ResponseEntity
+                .badRequest()
+                .body(ApiResponse.error("Erro ao deletar pergunta: ${e.message}"))
         }
     }
 }

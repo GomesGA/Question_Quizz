@@ -3,6 +3,8 @@ package br.com.ufu.question_quizz.controller
 import br.com.ufu.question_quizz.dto.ApiResponse
 import br.com.ufu.question_quizz.dto.GrupoDTO
 import br.com.ufu.question_quizz.dto.GrupoResponseDTO
+import br.com.ufu.question_quizz.dto.GrupoDeleteDTO
+import br.com.ufu.question_quizz.dto.GrupoDeleteResponseDTO
 import br.com.ufu.question_quizz.service.GrupoService
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
@@ -72,9 +74,9 @@ class GrupoController(private val grupoService: GrupoService) {
         SwaggerApiResponse(responseCode = "404", description = "Grupo não encontrado")
     ])
     @DeleteMapping
-    fun deletarGrupo(@RequestBody grupoDTO: GrupoDTO): ResponseEntity<ApiResponse<GrupoResponseDTO>> {
+    fun deletarGrupo(@RequestBody grupoDeleteDTO: GrupoDeleteDTO): ResponseEntity<ApiResponse<GrupoDeleteResponseDTO>> {
         return try {
-            val grupo = grupoService.deletarGrupo(grupoDTO)
+            val grupo = grupoService.deletarGrupo(grupoDeleteDTO)
             ResponseEntity.ok(
                 ApiResponse.success(
                     message = "Grupo deletado com sucesso",

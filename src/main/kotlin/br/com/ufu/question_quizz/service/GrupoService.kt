@@ -5,6 +5,8 @@ import br.com.ufu.question_quizz.repository.GrupoRepository
 import br.com.ufu.question_quizz.repository.UsuarioRepository
 import br.com.ufu.question_quizz.dto.GrupoDTO
 import br.com.ufu.question_quizz.dto.GrupoResponseDTO
+import br.com.ufu.question_quizz.dto.GrupoDeleteDTO
+import br.com.ufu.question_quizz.dto.GrupoDeleteResponseDTO
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import jakarta.persistence.EntityNotFoundException
@@ -24,7 +26,9 @@ class GrupoService(
         return grupos.map { grupo ->
             GrupoResponseDTO(
                 id = grupo.id!!,
-                descricao = grupo.descricao
+                descricao = grupo.descricao,
+                path = grupo.imagemPath,
+                idUsuario = grupo.usuario?.id
             )
         }
     }
@@ -43,21 +47,23 @@ class GrupoService(
         val grupoSalvo = grupoRepository.save(grupo)
         return GrupoResponseDTO(
             id = grupoSalvo.id!!,
-            descricao = grupoSalvo.descricao
+            descricao = grupoSalvo.descricao,
+            path = grupoSalvo.imagemPath,
+            idUsuario = grupoSalvo.usuario?.id
         )
     }
 
     @Transactional
-    fun deletarGrupo(grupoDTO: GrupoDTO): GrupoResponseDTO {
-        val grupo = grupoRepository.findById(grupoDTO.id!!)
-            .orElseThrow { EntityNotFoundException("Grupo não encontrado com ID: ${grupoDTO.id}") }
+    fun deletarGrupo(grupoDeleteDTO: GrupoDeleteDTO): GrupoDeleteResponseDTO {
+        val grupo = grupoRepository.findById(grupoDeleteDTO.id)
+            .orElseThrow { EntityNotFoundException("Grupo não encontrado com ID: ${grupoDeleteDTO.id}") }
 
-        if (grupo.usuario?.id != grupoDTO.usuarioId) {
+        if (grupo.usuario?.id != grupoDeleteDTO.usuarioId) {
             throw IllegalStateException("O grupo não pertence ao usuário especificado")
         }
 
         grupoRepository.delete(grupo)
-        return GrupoResponseDTO(
+        return GrupoDeleteResponseDTO(
             id = grupo.id!!,
             descricao = grupo.descricao
         )
