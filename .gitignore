@@ -42,4 +42,4 @@ out/
 ### Variáveis de ambiente ###
 .env
 .env.*
-!.env.example
+.qodo
