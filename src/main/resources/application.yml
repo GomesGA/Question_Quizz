@@ -1,0 +1,14 @@
+springdoc:
+  swagger-ui:
+    path: /api/docs
+    operationsSorter: method
+    tagsSorter: alpha
+    tryItOutEnabled: true
+    defaultModelsExpandDepth: -1
+    defaultModelExpandDepth: -1
+    docExpansion: list
+  api-docs:
+    path: /api/v1/api-docs
+  show-actuator: false
+  default-produces-media-type: application/json
+  default-consumes-media-type: application/json 

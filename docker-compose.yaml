@@ -1,0 +1,60 @@
+version: '3.8'
+
+services:
+  app:
+    image: sergiorocha1/question-quizz:latest
+    container_name: question-quizz-app
+    restart: always
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/${DB_NAME}
+      - SPRING_DATASOURCE_USERNAME=${DB_USERNAME}
+      - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD}
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=validate
+      - SPRING_JPA_SHOW_SQL=true
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=question-quizz-network"
+      - "traefik.http.routers.question-quizz.rule=Host(`${DOMAIN}`) || Host(`www.${DOMAIN}`)"
+      - "traefik.http.routers.question-quizz.entrypoints=websecure"
+      - "traefik.http.routers.question-quizz.tls=true"
+      - "traefik.http.routers.question-quizz.tls.certresolver=leresolver"
+      - "traefik.http.services.question-quizz.loadbalancer.server.port=8080"
+      - "traefik.http.services.question-quizz.loadbalancer.server.scheme=http"
+      - "traefik.http.middlewares.question-quizz-headers.headers.sslRedirect=true"
+      - "traefik.http.middlewares.question-quizz-headers.headers.stsSeconds=31536000"
+      - "traefik.http.middlewares.question-quizz-headers.headers.browserXssFilter=true"
+      - "traefik.http.middlewares.question-quizz-headers.headers.contentTypeNosniff=true"
+      - "traefik.http.middlewares.question-quizz-headers.headers.forceSTSHeader=true"
+      - "traefik.http.middlewares.question-quizz-headers.headers.stsIncludeSubdomains=true"
+      - "traefik.http.middlewares.question-quizz-headers.headers.stsPreload=true"
+      - "traefik.http.routers.question-quizz.middlewares=question-quizz-headers"
+    depends_on:
+      - postgres
+    networks:
+      - question-quizz-network
+
+  postgres:
+    image: postgres:15
+    container_name: question-quizz-postgres
+    environment:
+      POSTGRES_USER: ${DB_USERNAME}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
+    volumes:
+      - question_quizz_postgres_data:/var/lib/postgresql/data
+    networks:
+      - question-quizz-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME} -d ${DB_NAME}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+networks:
+  question-quizz-network:
+    name: question-quizz-network
+    external: true
+
+volumes:
+  question_quizz_postgres_data:
+    name: question_quizz_postgres_data

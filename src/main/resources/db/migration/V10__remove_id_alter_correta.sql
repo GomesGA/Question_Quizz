@@ -1,0 +1,1 @@
+ALTER TABLE perguntas DROP COLUMN id_alter_correta;
