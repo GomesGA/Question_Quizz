@@ -1,8 +1,16 @@
-<<<<<<< HEAD
-# Question_Quizz
-=======
-# Question Quizz
+📱 Question Quizz - Aplicativo Mobile
+Este projeto foi desenvolvido com a valiosa colaboração de:
 
+@D-Salge
+@Gemidio04
+@salgeee
+@sergio-rocha1
+@vinicius-salge
+
+📌 Visão Geral
+O Question Quizz é um aplicativo de aprendizado interativo desenvolvido em Kotlin com Jetpack Compose e Spring Boot, projetado para oferecer uma experiência moderna de quizzes educacionais.
+
+🔗 Repositório do Aplicativo (Frontend): [https://github.com/sergio-rocha1/question_quizz.git](https://github.com/GomesGA/question_quizz_app.git)
 Projeto de sistema de questionários desenvolvido com Spring Boot e Kotlin.
 
 ## Pré-requisitos
@@ -108,4 +116,3 @@ question_quizz/
 - Gradle
 - Docker
 - Swagger/OpenAPI (para documentação da API)
->>>>>>> master
