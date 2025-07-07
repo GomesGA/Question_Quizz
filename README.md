@@ -1,16 +1,18 @@
-📱 Question Quizz - Aplicativo Mobile
+# 📱 Question Quizz - Aplicativo Mobile  
+
 Este projeto foi desenvolvido com a valiosa colaboração de:
+-   [@D-Salge](https://github.com/D-Salge)
+-   [@Gemidio04](https://github.com/Gemidio04)
+-   [@salgeee](https://github.com/salgeee)
+-   [@sergio-rocha1](https://github.com/sergio-rocha1)
+-   [@vinicius-salge](https://github.com/vinicius-salge)
+## 📌 Visão Geral  
 
-@D-Salge
-@Gemidio04
-@salgeee
-@sergio-rocha1
-@vinicius-salge
+O **Question Quizz** é um aplicativo de aprendizado interativo desenvolvido em **Kotlin** com **Jetpack Compose** e **Spring Boot**, projetado para oferecer uma experiência moderna de quizzes educacionais.  
 
-📌 Visão Geral
-O Question Quizz é um aplicativo de aprendizado interativo desenvolvido em Kotlin com Jetpack Compose e Spring Boot, projetado para oferecer uma experiência moderna de quizzes educacionais.
+🔗 **Repositório do Aplicativo (FrontEnd):** [https://github.com/GomesGA/question_quizz_app.git](https://github.com/GomesGA/question_quizz_app.git)  
 
-🔗 Repositório do Aplicativo (Frontend): [https://github.com/sergio-rocha1/question_quizz.git](https://github.com/GomesGA/question_quizz_app.git)
+---
 Projeto de sistema de questionários desenvolvido com Spring Boot e Kotlin.
 
 ## Pré-requisitos
